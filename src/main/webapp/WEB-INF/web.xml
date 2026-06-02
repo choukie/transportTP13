@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee 
+         https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
+    <display-name>Agence Transport Interurbain</display-name>
+
+    <!-- Filtre de securite -->
+    <filter>
+        <filter-name>AuthFilter</filter-name>
+        <filter-class>com.agence.transport.filter.AuthFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>AuthFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <!-- Login -->
+    <servlet>
+        <servlet-name>LoginServlet</servlet-name>
+        <servlet-class>com.agence.transport.servlet.LoginServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>LoginServlet</servlet-name>
+        <url-pattern>/login</url-pattern>
+    </servlet-mapping>
+
+    <!-- Dashboard -->
+    <servlet>
+        <servlet-name>DashboardServlet</servlet-name>
+        <servlet-class>com.agence.transport.servlet.DashboardServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>DashboardServlet</servlet-name>
+        <url-pattern>/dashboard</url-pattern>
+    </servlet-mapping>
+
+    <!-- Vehicules -->
+    <servlet>
+        <servlet-name>VehiculeServlet</servlet-name>
+        <servlet-class>com.agence.transport.servlet.VehiculeServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>VehiculeServlet</servlet-name>
+        <url-pattern>/vehicules</url-pattern>
+    </servlet-mapping>
+
+    <!-- Voyages -->
+    <servlet>
+        <servlet-name>VoyageServlet</servlet-name>
+        <servlet-class>com.agence.transport.servlet.VoyageServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>VoyageServlet</servlet-name>
+        <url-pattern>/voyages</url-pattern>
+    </servlet-mapping>
+
+    <!-- Passagers -->
+    <servlet>
+        <servlet-name>PassagerServlet</servlet-name>
+        <servlet-class>com.agence.transport.servlet.PassagerServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>PassagerServlet</servlet-name>
+        <url-pattern>/passagers</url-pattern>
+    </servlet-mapping>
+
+    <!-- Reservations -->
+    <servlet>
+        <servlet-name>ReservationServlet</servlet-name>
+        <servlet-class>com.agence.transport.servlet.ReservationServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ReservationServlet</servlet-name>
+        <url-pattern>/reservations</url-pattern>
+    </servlet-mapping>
+
+    <!-- Statistiques -->
+    <servlet>
+        <servlet-name>StatistiqueServlet</servlet-name>
+        <servlet-class>com.agence.transport.servlet.StatistiqueServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>StatistiqueServlet</servlet-name>
+        <url-pattern>/statistiques</url-pattern>
+    </servlet-mapping>
+
+    <!-- Export CSV -->
+    <servlet>
+        <servlet-name>ExportServlet</servlet-name>
+        <servlet-class>com.agence.transport.servlet.ExportServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ExportServlet</servlet-name>
+        <url-pattern>/export</url-pattern>
+    </servlet-mapping>
+
+    <!-- PDF -->
+    <servlet>
+        <servlet-name>PdfServlet</servlet-name>
+        <servlet-class>com.agence.transport.servlet.PdfServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>PdfServlet</servlet-name>
+        <url-pattern>/pdf</url-pattern>
+    </servlet-mapping>
+
+    <!-- Rapports -->
+    <servlet>
+        <servlet-name>RapportServlet</servlet-name>
+        <servlet-class>com.agence.transport.servlet.RapportServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>RapportServlet</servlet-name>
+        <url-pattern>/rapports</url-pattern>
+    </servlet-mapping>
+
+    <session-config>
+        <session-timeout>30</session-timeout>
+    </session-config>
+    <!-- Inscription -->
+<servlet>
+    <servlet-name>InscriptionServlet</servlet-name>
+    <servlet-class>com.agence.transport.servlet.InscriptionServlet</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>InscriptionServlet</servlet-name>
+    <url-pattern>/inscription</url-pattern>
+</servlet-mapping>
+<!-- Espace Client -->
+<servlet>
+    <servlet-name>EspaceClientServlet</servlet-name>
+    <servlet-class>com.agence.transport.servlet.EspaceClientServlet</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>EspaceClientServlet</servlet-name>
+    <url-pattern>/espace-client</url-pattern>
+</servlet-mapping>
+<!-- Pages d'erreur -->
+<error-page>
+    <error-code>404</error-code>
+    <location>/WEB-INF/vues/error404.jsp</location>
+</error-page>
+<error-page>
+    <error-code>500</error-code>
+    <location>/WEB-INF/vues/error500.jsp</location>
+</error-page>
+
+<!-- Filtre securite HTTP -->
+<filter>
+    <filter-name>SecurityHeadersFilter</filter-name>
+    <filter-class>com.agence.transport.filter.SecurityHeadersFilter</filter-class>
+</filter>
+<filter-mapping>
+    <filter-name>SecurityHeadersFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+</filter-mapping>
+</web-app>
