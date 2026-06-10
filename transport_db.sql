@@ -33,7 +33,8 @@ CREATE TABLE `passager` (
   `prenom` varchar(100) NOT NULL,
   `telephone` varchar(20) NOT NULL,
   `piece_identite` varchar(50) DEFAULT NULL,
-  `email` varchar(150) DEFAULT NULL
+  `email` varchar(150) DEFAULT NULL,
+  `utilisateur_id` bigint(20) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -227,6 +228,14 @@ ALTER TABLE `voyage`
 --
 -- Contraintes pour les tables déchargées
 --
+
+--
+-- Contraintes pour la table `passager`
+--
+ALTER TABLE `passager`
+  ADD KEY `utilisateur_id` (`utilisateur_id`);
+ALTER TABLE `passager`
+  ADD CONSTRAINT `passager_ibfk_1` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateur` (`id`);
 
 --
 -- Contraintes pour la table `reservation_transport`

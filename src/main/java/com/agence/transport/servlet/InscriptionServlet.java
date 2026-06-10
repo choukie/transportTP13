@@ -58,21 +58,25 @@ public class InscriptionServlet extends HttpServlet {
         }
 
         try {
-            // Creer le passager
-            Passager passager = new Passager();
-            passager.setNom(nom);
-            passager.setPrenom(prenom);
-            passager.setTelephone(telephone);
-            passager.setEmail(email);
-            passagerDAO.ajouter(passager);
-
-            // Creer l'utilisateur
+            // Creer l'utilisateur d'abord
             Utilisateur utilisateur = new Utilisateur();
             utilisateur.setLogin(login);
             utilisateur.setMotDePasse(PasswordUtil.hasher(motDePasse));
             utilisateur.setRole("CLIENT");
             utilisateur.setActif(true);
             utilisateurDAO.ajouter(utilisateur);
+
+            // Recuperer l'utilisateur pour avoir son ID
+            Utilisateur utilisateurCree = utilisateurDAO.trouverParLogin(login);
+
+            // Creer le passager lie a l'utilisateur
+            Passager passager = new Passager();
+            passager.setNom(nom);
+            passager.setPrenom(prenom);
+            passager.setTelephone(telephone);
+            passager.setEmail(email);
+            passager.setUtilisateurId(utilisateurCree.getId());
+            passagerDAO.ajouter(passager);
 
             request.setAttribute("succes", "Compte cree avec succes ! Vous pouvez vous connecter.");
             request.getRequestDispatcher("/WEB-INF/vues/inscription.jsp").forward(request, response);

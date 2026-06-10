@@ -10,4 +10,6 @@ public interface VoyageDAO {
     Voyage trouverParId(Long id);
     List<Voyage> listerTous();
     List<Voyage> listerParVehicule(Long vehiculeId);
+    List<Voyage> rechercher(String motCle, int page, int taille);
+    int compterRecherche(String motCle);
 }

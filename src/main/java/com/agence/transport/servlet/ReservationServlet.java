@@ -19,6 +19,7 @@ public class ReservationServlet extends HttpServlet {
     private ReservationDAO reservationDAO = new ReservationDAOImpl();
     private PassagerDAO passagerDAO = new PassagerDAOImpl();
     private VoyageDAO voyageDAO = new VoyageDAOImpl();
+    private static final int TAILLE_PAGE = 5;
 
     private boolean estConnecte(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
@@ -35,12 +36,31 @@ public class ReservationServlet extends HttpServlet {
             throws ServletException, IOException {
         if (!estConnecte(request, response)) return;
 
-        List<ReservationTransport> reservations = reservationDAO.listerTous();
+        String motCle = request.getParameter("recherche");
+        if (motCle == null) motCle = "";
+
+        int page = 1;
+        try {
+            String pageParam = request.getParameter("page");
+            if (pageParam != null) page = Integer.parseInt(pageParam);
+        } catch (NumberFormatException e) { page = 1; }
+
+        int total = reservationDAO.compterRecherche(motCle);
+        int totalPages = (int) Math.ceil((double) total / TAILLE_PAGE);
+        if (totalPages == 0) totalPages = 1;
+        if (page < 1) page = 1;
+        if (page > totalPages) page = totalPages;
+
+        List<ReservationTransport> reservations = reservationDAO.rechercher(motCle, page, TAILLE_PAGE);
         List<Passager> passagers = passagerDAO.listerTous();
         List<Voyage> voyages = voyageDAO.listerTous();
         request.setAttribute("reservations", reservations);
         request.setAttribute("passagers", passagers);
         request.setAttribute("voyages", voyages);
+        request.setAttribute("recherche", motCle);
+        request.setAttribute("page", page);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("total", total);
         request.getRequestDispatcher("/WEB-INF/vues/reservations.jsp").forward(request, response);
     }
 
@@ -58,18 +78,15 @@ public class ReservationServlet extends HttpServlet {
                 r.setVoyageId(Long.parseLong(request.getParameter("voyageId")));
                 r.setNbPlaces(Integer.parseInt(request.getParameter("nbPlaces")));
 
-                // Calcul montant
                 Voyage voyage = voyageDAO.trouverParId(r.getVoyageId());
                 double montant = voyage.getPrixPlaceFcfa() * r.getNbPlaces();
                 r.setMontantTotal(montant);
 
-                // Generation numero billet
                 r.setNumeroBillet("BIL-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
                 r.setStatut(request.getParameter("statut") != null ? request.getParameter("statut") : "CONFIRMEE");
 
                 reservationDAO.ajouter(r);
 
-                // Envoi SMS confirmation
                 Passager passager = passagerDAO.trouverParId(r.getPassagerId());
                 if (passager != null && passager.getTelephone() != null) {
                     boolean smsSent = SmsService.envoyerConfirmationBillet(
@@ -105,7 +122,6 @@ public class ReservationServlet extends HttpServlet {
                 request.setAttribute("message", "Reservation supprimee avec succes !");
 
             } else if ("alerte_retard".equals(action)) {
-                // Envoyer alerte retard a tous les passagers d'un voyage
                 Long voyageId = Long.parseLong(request.getParameter("voyageId"));
                 int heuresRetard = Integer.parseInt(request.getParameter("heuresRetard"));
                 Voyage voyage = voyageDAO.trouverParId(voyageId);
@@ -133,12 +149,18 @@ public class ReservationServlet extends HttpServlet {
             e.printStackTrace();
         }
 
-        List<ReservationTransport> reservations = reservationDAO.listerTous();
-        List<Passager> passagers = passagerDAO.listerTous();
-        List<Voyage> voyages = voyageDAO.listerTous();
-        request.setAttribute("reservations", reservations);
-        request.setAttribute("passagers", passagers);
-        request.setAttribute("voyages", voyages);
+        String motCle = "";
+        int total = reservationDAO.compterRecherche(motCle);
+        int totalPages = (int) Math.ceil((double) total / TAILLE_PAGE);
+        if (totalPages == 0) totalPages = 1;
+
+        request.setAttribute("reservations", reservationDAO.rechercher(motCle, 1, TAILLE_PAGE));
+        request.setAttribute("passagers", passagerDAO.listerTous());
+        request.setAttribute("voyages", voyageDAO.listerTous());
+        request.setAttribute("recherche", motCle);
+        request.setAttribute("page", 1);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("total", total);
         request.getRequestDispatcher("/WEB-INF/vues/reservations.jsp").forward(request, response);
     }
 }

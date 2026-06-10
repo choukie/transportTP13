@@ -21,10 +21,12 @@
         </a>
 
         <div class="nav-section">Gestion</div>
+        <% if ("ADMIN".equals(sidebarRole)) { %>
         <a href="${pageContext.request.contextPath}/vehicules"
            class="nav-item <%= "vehicules".equals(currentPage) ? "active" : "" %>">
             <span class="nav-icon">&#128652;</span> Vehicules
         </a>
+        <% } %>
         <a href="${pageContext.request.contextPath}/voyages"
            class="nav-item <%= "voyages".equals(currentPage) ? "active" : "" %>">
             <span class="nav-icon">&#128506;</span> Voyages
@@ -39,10 +41,12 @@
         </a>
 
         <div class="nav-section">Rapports</div>
+        <% if ("ADMIN".equals(sidebarRole)) { %>
         <a href="${pageContext.request.contextPath}/statistiques"
            class="nav-item <%= "statistiques".equals(currentPage) ? "active" : "" %>">
             <span class="nav-icon">&#128200;</span> Statistiques
         </a>
+        <% } %>
         <a href="${pageContext.request.contextPath}/rapports"
            class="nav-item <%= "rapports".equals(currentPage) ? "active" : "" %>">
             <span class="nav-icon">&#128196;</span> Rapports PDF

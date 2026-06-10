@@ -5,6 +5,10 @@
     List<Passager> passagers = (List<Passager>) request.getAttribute("passagers");
     String message = (String) request.getAttribute("message");
     String erreur  = (String) request.getAttribute("erreur");
+    String recherche = request.getAttribute("recherche") != null ? (String) request.getAttribute("recherche") : "";
+    int page = request.getAttribute("page") != null ? (Integer) request.getAttribute("page") : 1;
+    int totalPages = request.getAttribute("totalPages") != null ? (Integer) request.getAttribute("totalPages") : 1;
+    int total = request.getAttribute("total") != null ? (Integer) request.getAttribute("total") : 0;
 %>
 <!DOCTYPE html>
 <html>
@@ -39,11 +43,29 @@
             <div class="alert alert-danger">&#9888; <%= erreur %></div>
         <% } %>
 
+        <!-- BARRE DE RECHERCHE -->
+        <form method="get" action="${pageContext.request.contextPath}/passagers" style="margin-bottom:20px;">
+            <div class="search-bar">
+                <div class="search-input-wrap">
+                    <span class="search-icon">&#128269;</span>
+                    <input type="text" name="recherche" value="<%= recherche %>"
+                           placeholder="Rechercher par nom, prenom, telephone, email...">
+                </div>
+                <button type="submit" class="btn btn-primary">Rechercher</button>
+                <% if (!recherche.isEmpty()) { %>
+                    <a href="${pageContext.request.contextPath}/passagers" class="btn btn-outline">&#10005; Effacer</a>
+                <% } %>
+            </div>
+        </form>
+
         <div class="card">
             <div class="card-header">
                 <h3>Liste des passagers</h3>
                 <span style="font-size:13px; color:var(--text-light);">
-                    <%= passagers != null ? passagers.size() : 0 %> passager(s)
+                    <%= total %> passager(s)
+                    <% if (!recherche.isEmpty()) { %>
+                        pour "<strong><%= recherche %></strong>"
+                    <% } %>
                 </span>
             </div>
             <div class="card-body" style="padding:0;">
@@ -106,6 +128,23 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- PAGINATION -->
+                <% if (totalPages > 1) { %>
+                <div class="pagination" style="padding:16px;">
+                    <% if (page > 1) { %>
+                        <a href="${pageContext.request.contextPath}/passagers?recherche=<%= recherche %>&page=<%= page-1 %>" class="page-link">&#8592;</a>
+                    <% } %>
+                    <% for (int i = 1; i <= totalPages; i++) { %>
+                        <a href="${pageContext.request.contextPath}/passagers?recherche=<%= recherche %>&page=<%= i %>"
+                           class="page-link <%= i == page ? "active" : "" %>"><%= i %></a>
+                    <% } %>
+                    <% if (page < totalPages) { %>
+                        <a href="${pageContext.request.contextPath}/passagers?recherche=<%= recherche %>&page=<%= page+1 %>" class="page-link">&#8594;</a>
+                    <% } %>
+                </div>
+                <% } %>
+
             </div>
         </div>
     </div>

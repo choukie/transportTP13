@@ -16,6 +16,8 @@ public class EspaceClientServlet extends HttpServlet {
     private ReservationDAO reservationDAO = new ReservationDAOImpl();
     private PassagerDAO passagerDAO = new PassagerDAOImpl();
 
+    private static final int TAILLE_PAGE = 5;
+
     private boolean estClient(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         HttpSession session = request.getSession(false);
@@ -26,28 +28,53 @@ public class EspaceClientServlet extends HttpServlet {
         return true;
     }
 
+    private Passager getPassagerClient(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        Utilisateur user = (Utilisateur) session.getAttribute("user");
+        return passagerDAO.trouverParUtilisateurId(user.getId());
+    }
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         if (!estClient(request, response)) return;
 
         String action = request.getParameter("action");
+        List<Voyage> voyages = voyageDAO.listerTous();
 
         if ("reserver".equals(action)) {
-            // Afficher formulaire de reservation
-            List<Voyage> voyages = voyageDAO.listerTous();
             request.setAttribute("voyages", voyages);
             request.setAttribute("vue", "reserver");
+
         } else if ("mes-reservations".equals(action)) {
-            // Afficher les reservations du client
-            HttpSession session = request.getSession(false);
-            String loginClient = (String) session.getAttribute("login");
-            List<ReservationTransport> mesReservations = reservationDAO.listerTous();
+            // Pagination des reservations du client
+            Passager passagerClient = getPassagerClient(request);
+            List<ReservationTransport> mesReservations = null;
+            int total = 0;
+
+            if (passagerClient != null) {
+                int page = 1;
+                try {
+                    String pageParam = request.getParameter("page");
+                    if (pageParam != null) page = Integer.parseInt(pageParam);
+                } catch (NumberFormatException e) { page = 1; }
+
+                total = reservationDAO.compterParPassager(passagerClient.getId());
+                int totalPages = (int) Math.ceil((double) total / TAILLE_PAGE);
+                if (totalPages == 0) totalPages = 1;
+                if (page < 1) page = 1;
+                if (page > totalPages) page = totalPages;
+
+                mesReservations = reservationDAO.listerParPassager(passagerClient.getId(), page, TAILLE_PAGE);
+                request.setAttribute("page", page);
+                request.setAttribute("totalPages", totalPages);
+            }
+
             request.setAttribute("mesReservations", mesReservations);
+            request.setAttribute("total", total);
             request.setAttribute("vue", "mes-reservations");
+
         } else {
-            // Page d'accueil espace client
-            List<Voyage> voyages = voyageDAO.listerTous();
             request.setAttribute("voyages", voyages);
             request.setAttribute("vue", "accueil");
         }
@@ -64,21 +91,10 @@ public class EspaceClientServlet extends HttpServlet {
 
         if ("reserver".equals(action)) {
             try {
-                HttpSession session = request.getSession(false);
-                String loginClient = (String) session.getAttribute("login");
-
-                // Trouver le passager correspondant
-                List<Passager> passagers = passagerDAO.listerTous();
-                Passager passagerClient = null;
-                for (Passager p : passagers) {
-                    if (p.getTelephone() != null) {
-                        passagerClient = p;
-                        break;
-                    }
-                }
+                Passager passagerClient = getPassagerClient(request);
 
                 if (passagerClient == null) {
-                    request.setAttribute("erreur", "Profil passager introuvable.");
+                    request.setAttribute("erreur", "Profil passager introuvable. Contactez l'administration.");
                 } else {
                     ReservationTransport r = new ReservationTransport();
                     r.setPassagerId(passagerClient.getId());

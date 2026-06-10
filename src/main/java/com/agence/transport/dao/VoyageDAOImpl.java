@@ -166,4 +166,59 @@ public class VoyageDAOImpl implements VoyageDAO {
         }
         return voyages;
     }
+
+    @Override
+    public List<Voyage> rechercher(String motCle, int page, int taille) {
+        List<Voyage> voyages = new ArrayList<>();
+        String like = "%" + (motCle != null ? motCle.trim() : "") + "%";
+        int offset = (page - 1) * taille;
+        String sql = "SELECT v.*, ve.immatriculation FROM voyage v " +
+                     "JOIN vehicule ve ON v.vehicule_id = ve.id " +
+                     "WHERE v.ville_depart LIKE ? OR v.ville_arrivee LIKE ? OR v.chauffeur LIKE ? OR ve.immatriculation LIKE ? " +
+                     "ORDER BY v.id DESC LIMIT ? OFFSET ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, like);
+            pstmt.setString(2, like);
+            pstmt.setString(3, like);
+            pstmt.setString(4, like);
+            pstmt.setInt(5, taille);
+            pstmt.setInt(6, offset);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                Voyage voyage = new Voyage();
+                voyage.setId(rs.getLong("id"));
+                voyage.setVehiculeId(rs.getLong("vehicule_id"));
+                voyage.setChauffeur(rs.getString("chauffeur"));
+                voyage.setVilleDepart(rs.getString("ville_depart"));
+                voyage.setVilleArrivee(rs.getString("ville_arrivee"));
+                Timestamp ts = rs.getTimestamp("date_heure_depart");
+                voyage.setDateHeureDepart(ts != null ? ts.toLocalDateTime() : null);
+                voyage.setPrixPlaceFcfa(rs.getDouble("prix_place_fcfa"));
+                voyage.setNbPlacesDispo(rs.getInt("nb_places_dispo"));
+                voyage.setStatut(rs.getString("statut"));
+                voyage.setVehiculeImmatriculation(rs.getString("immatriculation"));
+                voyages.add(voyage);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return voyages;
+    }
+
+    @Override
+    public int compterRecherche(String motCle) {
+        String like = "%" + (motCle != null ? motCle.trim() : "") + "%";
+        String sql = "SELECT COUNT(*) FROM voyage v " +
+                     "JOIN vehicule ve ON v.vehicule_id = ve.id " +
+                     "WHERE v.ville_depart LIKE ? OR v.ville_arrivee LIKE ? OR v.chauffeur LIKE ? OR ve.immatriculation LIKE ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, like);
+            pstmt.setString(2, like);
+            pstmt.setString(3, like);
+            pstmt.setString(4, like);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) return rs.getInt(1);
+        } catch (SQLException e) { e.printStackTrace(); }
+        return 0;
+    }
 }

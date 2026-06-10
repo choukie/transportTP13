@@ -21,6 +21,7 @@ public class VoyageServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private VoyageDAO voyageDAO = new VoyageDAOImpl();
     private VehiculeDAO vehiculeDAO = new VehiculeDAOImpl();
+    private static final int TAILLE_PAGE = 5;
 
     private boolean estConnecte(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
@@ -37,10 +38,30 @@ public class VoyageServlet extends HttpServlet {
             throws ServletException, IOException {
         if (!estConnecte(request, response)) return;
 
-        List<Voyage> voyages = voyageDAO.listerTous();
+        String motCle = request.getParameter("recherche");
+        if (motCle == null) motCle = "";
+
+        int page = 1;
+        try {
+            String pageParam = request.getParameter("page");
+            if (pageParam != null) page = Integer.parseInt(pageParam);
+        } catch (NumberFormatException e) { page = 1; }
+
+        int total = voyageDAO.compterRecherche(motCle);
+        int totalPages = (int) Math.ceil((double) total / TAILLE_PAGE);
+        if (totalPages == 0) totalPages = 1;
+        if (page < 1) page = 1;
+        if (page > totalPages) page = totalPages;
+
+        List<Voyage> voyages = voyageDAO.rechercher(motCle, page, TAILLE_PAGE);
         List<Vehicule> vehicules = vehiculeDAO.listerTous();
+
         request.setAttribute("voyages", voyages);
         request.setAttribute("vehicules", vehicules);
+        request.setAttribute("recherche", motCle);
+        request.setAttribute("page", page);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("total", total);
         request.getRequestDispatcher("/WEB-INF/vues/voyages.jsp").forward(request, response);
     }
 
@@ -75,10 +96,18 @@ public class VoyageServlet extends HttpServlet {
             e.printStackTrace();
         }
 
-        List<Voyage> voyages = voyageDAO.listerTous();
-        List<Vehicule> vehicules = vehiculeDAO.listerTous();
-        request.setAttribute("voyages", voyages);
-        request.setAttribute("vehicules", vehicules);
+        // Recharger avec pagination
+        String motCle = "";
+        int total = voyageDAO.compterRecherche(motCle);
+        int totalPages = (int) Math.ceil((double) total / TAILLE_PAGE);
+        if (totalPages == 0) totalPages = 1;
+
+        request.setAttribute("voyages", voyageDAO.rechercher(motCle, 1, TAILLE_PAGE));
+        request.setAttribute("vehicules", vehiculeDAO.listerTous());
+        request.setAttribute("recherche", motCle);
+        request.setAttribute("page", 1);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("total", total);
         request.getRequestDispatcher("/WEB-INF/vues/voyages.jsp").forward(request, response);
     }
 

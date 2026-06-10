@@ -16,6 +16,7 @@ import com.agence.transport.model.Passager;
 public class PassagerServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private PassagerDAO passagerDAO = new PassagerDAOImpl();
+    private static final int TAILLE_PAGE = 5;
 
     private boolean estConnecte(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
@@ -32,8 +33,28 @@ public class PassagerServlet extends HttpServlet {
             throws ServletException, IOException {
         if (!estConnecte(request, response)) return;
 
-        List<Passager> passagers = passagerDAO.listerTous();
+        String motCle = request.getParameter("recherche");
+        if (motCle == null) motCle = "";
+
+        int page = 1;
+        try {
+            String pageParam = request.getParameter("page");
+            if (pageParam != null) page = Integer.parseInt(pageParam);
+        } catch (NumberFormatException e) { page = 1; }
+
+        int total = passagerDAO.compterRecherche(motCle);
+        int totalPages = (int) Math.ceil((double) total / TAILLE_PAGE);
+        if (totalPages == 0) totalPages = 1;
+        if (page < 1) page = 1;
+        if (page > totalPages) page = totalPages;
+
+        List<Passager> passagers = passagerDAO.rechercher(motCle, page, TAILLE_PAGE);
+
         request.setAttribute("passagers", passagers);
+        request.setAttribute("recherche", motCle);
+        request.setAttribute("page", page);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("total", total);
         request.getRequestDispatcher("/WEB-INF/vues/passagers.jsp").forward(request, response);
     }
 
@@ -68,8 +89,17 @@ public class PassagerServlet extends HttpServlet {
             e.printStackTrace();
         }
 
-        List<Passager> passagers = passagerDAO.listerTous();
-        request.setAttribute("passagers", passagers);
+        // Recharger avec pagination
+        String motCle = "";
+        int total = passagerDAO.compterRecherche(motCle);
+        int totalPages = (int) Math.ceil((double) total / TAILLE_PAGE);
+        if (totalPages == 0) totalPages = 1;
+
+        request.setAttribute("passagers", passagerDAO.rechercher(motCle, 1, TAILLE_PAGE));
+        request.setAttribute("recherche", motCle);
+        request.setAttribute("page", 1);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("total", total);
         request.getRequestDispatcher("/WEB-INF/vues/passagers.jsp").forward(request, response);
     }
 

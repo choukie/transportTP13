@@ -45,31 +45,15 @@ public class ReservationDAOImpl implements ReservationDAO {
         String sql = "SELECT r.*, p.nom, p.prenom, v.ville_depart, v.ville_arrivee, v.chauffeur, v.date_heure_depart " +
                      "FROM reservation_transport r " +
                      "JOIN passager p ON r.passager_id = p.id " +
-                     "JOIN voyage v ON r.voyage_id = v.id";
+                     "JOIN voyage v ON r.voyage_id = v.id " +
+                     "ORDER BY r.id DESC";
         
         try (Connection conn = DBConnection.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             
             while (rs.next()) {
-                ReservationTransport r = new ReservationTransport();
-                r.setId(rs.getLong("id"));
-                r.setPassagerId(rs.getLong("passager_id"));
-                r.setVoyageId(rs.getLong("voyage_id"));
-                r.setNbPlaces(rs.getInt("nb_places"));
-                r.setMontantTotal(rs.getDouble("montant_total"));
-                r.setNumeroBillet(rs.getString("numero_billet"));
-                r.setStatut(rs.getString("statut"));
-                Timestamp ts = rs.getTimestamp("date_reservation");
-                r.setDateReservation(ts != null ? ts.toLocalDateTime() : null);
-                r.setPassagerNom(rs.getString("nom"));
-                r.setPassagerPrenom(rs.getString("prenom"));
-                r.setVilleDepart(rs.getString("ville_depart"));
-                r.setVilleArrivee(rs.getString("ville_arrivee"));
-                r.setChauffeur(rs.getString("chauffeur"));
-                Timestamp ts2 = rs.getTimestamp("date_heure_depart");
-                r.setDateHeureDepart(ts2 != null ? ts2.toLocalDateTime() : null);
-                reservations.add(r);
+                reservations.add(mapper(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -132,23 +116,7 @@ public class ReservationDAOImpl implements ReservationDAO {
             ResultSet rs = pstmt.executeQuery();
             
             if (rs.next()) {
-                reservation = new ReservationTransport();
-                reservation.setId(rs.getLong("id"));
-                reservation.setPassagerId(rs.getLong("passager_id"));
-                reservation.setVoyageId(rs.getLong("voyage_id"));
-                reservation.setNbPlaces(rs.getInt("nb_places"));
-                reservation.setMontantTotal(rs.getDouble("montant_total"));
-                reservation.setNumeroBillet(rs.getString("numero_billet"));
-                reservation.setStatut(rs.getString("statut"));
-                Timestamp ts = rs.getTimestamp("date_reservation");
-                reservation.setDateReservation(ts != null ? ts.toLocalDateTime() : null);
-                reservation.setPassagerNom(rs.getString("nom"));
-                reservation.setPassagerPrenom(rs.getString("prenom"));
-                reservation.setVilleDepart(rs.getString("ville_depart"));
-                reservation.setVilleArrivee(rs.getString("ville_arrivee"));
-                reservation.setChauffeur(rs.getString("chauffeur"));
-                Timestamp ts2 = rs.getTimestamp("date_heure_depart");
-                reservation.setDateHeureDepart(ts2 != null ? ts2.toLocalDateTime() : null);
+                reservation = mapper(rs);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -163,7 +131,7 @@ public class ReservationDAOImpl implements ReservationDAO {
                      "FROM reservation_transport r " +
                      "JOIN passager p ON r.passager_id = p.id " +
                      "JOIN voyage v ON r.voyage_id = v.id " +
-                     "WHERE r.passager_id=?";
+                     "WHERE r.passager_id=? ORDER BY r.id DESC";
         
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -172,24 +140,7 @@ public class ReservationDAOImpl implements ReservationDAO {
             ResultSet rs = pstmt.executeQuery();
             
             while (rs.next()) {
-                ReservationTransport r = new ReservationTransport();
-                r.setId(rs.getLong("id"));
-                r.setPassagerId(rs.getLong("passager_id"));
-                r.setVoyageId(rs.getLong("voyage_id"));
-                r.setNbPlaces(rs.getInt("nb_places"));
-                r.setMontantTotal(rs.getDouble("montant_total"));
-                r.setNumeroBillet(rs.getString("numero_billet"));
-                r.setStatut(rs.getString("statut"));
-                Timestamp ts = rs.getTimestamp("date_reservation");
-                r.setDateReservation(ts != null ? ts.toLocalDateTime() : null);
-                r.setPassagerNom(rs.getString("nom"));
-                r.setPassagerPrenom(rs.getString("prenom"));
-                r.setVilleDepart(rs.getString("ville_depart"));
-                r.setVilleArrivee(rs.getString("ville_arrivee"));
-                r.setChauffeur(rs.getString("chauffeur"));
-                Timestamp ts2 = rs.getTimestamp("date_heure_depart");
-                r.setDateHeureDepart(ts2 != null ? ts2.toLocalDateTime() : null);
-                reservations.add(r);
+                reservations.add(mapper(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -197,6 +148,135 @@ public class ReservationDAOImpl implements ReservationDAO {
         return reservations;
     }
     
+    @Override
+    public List<ReservationTransport> listerTous(int page, int taille) {
+        List<ReservationTransport> reservations = new ArrayList<>();
+        int offset = (page - 1) * taille;
+        String sql = "SELECT r.*, p.nom, p.prenom, v.ville_depart, v.ville_arrivee, v.chauffeur, v.date_heure_depart " +
+                     "FROM reservation_transport r " +
+                     "JOIN passager p ON r.passager_id = p.id " +
+                     "JOIN voyage v ON r.voyage_id = v.id " +
+                     "ORDER BY r.id DESC LIMIT ? OFFSET ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, taille);
+            pstmt.setInt(2, offset);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) reservations.add(mapper(rs));
+        } catch (SQLException e) { e.printStackTrace(); }
+        return reservations;
+    }
+
+    @Override
+    public int compterTous() {
+        String sql = "SELECT COUNT(*) FROM reservation_transport";
+        try (Connection conn = DBConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) return rs.getInt(1);
+        } catch (SQLException e) { e.printStackTrace(); }
+        return 0;
+    }
+
+    private ReservationTransport mapper(ResultSet rs) throws SQLException {
+        ReservationTransport r = new ReservationTransport();
+        r.setId(rs.getLong("id"));
+        r.setPassagerId(rs.getLong("passager_id"));
+        r.setVoyageId(rs.getLong("voyage_id"));
+        r.setNbPlaces(rs.getInt("nb_places"));
+        r.setMontantTotal(rs.getDouble("montant_total"));
+        r.setNumeroBillet(rs.getString("numero_billet"));
+        r.setStatut(rs.getString("statut"));
+        Timestamp ts = rs.getTimestamp("date_reservation");
+        r.setDateReservation(ts != null ? ts.toLocalDateTime() : null);
+        r.setPassagerNom(rs.getString("nom"));
+        r.setPassagerPrenom(rs.getString("prenom"));
+        r.setVilleDepart(rs.getString("ville_depart"));
+        r.setVilleArrivee(rs.getString("ville_arrivee"));
+        r.setChauffeur(rs.getString("chauffeur"));
+        Timestamp ts2 = rs.getTimestamp("date_heure_depart");
+        r.setDateHeureDepart(ts2 != null ? ts2.toLocalDateTime() : null);
+        return r;
+    }
+
+    @Override
+    public List<ReservationTransport> listerParPassager(Long passagerId, int page, int taille) {
+        List<ReservationTransport> reservations = new ArrayList<>();
+        int offset = (page - 1) * taille;
+        String sql = "SELECT r.*, p.nom, p.prenom, v.ville_depart, v.ville_arrivee, v.chauffeur, v.date_heure_depart " +
+                     "FROM reservation_transport r " +
+                     "JOIN passager p ON r.passager_id = p.id " +
+                     "JOIN voyage v ON r.voyage_id = v.id " +
+                     "WHERE r.passager_id=? ORDER BY r.id DESC LIMIT ? OFFSET ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setLong(1, passagerId);
+            pstmt.setInt(2, taille);
+            pstmt.setInt(3, offset);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) reservations.add(mapper(rs));
+        } catch (SQLException e) { e.printStackTrace(); }
+        return reservations;
+    }
+
+    @Override
+    public int compterParPassager(Long passagerId) {
+        String sql = "SELECT COUNT(*) FROM reservation_transport WHERE passager_id=?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setLong(1, passagerId);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) return rs.getInt(1);
+        } catch (SQLException e) { e.printStackTrace(); }
+        return 0;
+    }
+
+    @Override
+    public List<ReservationTransport> rechercher(String motCle, int page, int taille) {
+        List<ReservationTransport> reservations = new ArrayList<>();
+        String like = "%" + (motCle != null ? motCle.trim() : "") + "%";
+        int offset = (page - 1) * taille;
+        String sql = "SELECT r.*, p.nom, p.prenom, v.ville_depart, v.ville_arrivee, v.chauffeur, v.date_heure_depart " +
+                     "FROM reservation_transport r " +
+                     "JOIN passager p ON r.passager_id = p.id " +
+                     "JOIN voyage v ON r.voyage_id = v.id " +
+                     "WHERE r.numero_billet LIKE ? OR p.nom LIKE ? OR p.prenom LIKE ? OR v.ville_depart LIKE ? OR v.ville_arrivee LIKE ? " +
+                     "ORDER BY r.id DESC LIMIT ? OFFSET ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, like);
+            pstmt.setString(2, like);
+            pstmt.setString(3, like);
+            pstmt.setString(4, like);
+            pstmt.setString(5, like);
+            pstmt.setInt(6, taille);
+            pstmt.setInt(7, offset);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) reservations.add(mapper(rs));
+        } catch (SQLException e) { e.printStackTrace(); }
+        return reservations;
+    }
+
+    @Override
+    public int compterRecherche(String motCle) {
+        String like = "%" + (motCle != null ? motCle.trim() : "") + "%";
+        String sql = "SELECT COUNT(*) FROM reservation_transport r " +
+                     "JOIN passager p ON r.passager_id = p.id " +
+                     "JOIN voyage v ON r.voyage_id = v.id " +
+                     "WHERE r.numero_billet LIKE ? OR p.nom LIKE ? OR p.prenom LIKE ? OR v.ville_depart LIKE ? OR v.ville_arrivee LIKE ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, like);
+            pstmt.setString(2, like);
+            pstmt.setString(3, like);
+            pstmt.setString(4, like);
+            pstmt.setString(5, like);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) return rs.getInt(1);
+        } catch (SQLException e) { e.printStackTrace(); }
+        return 0;
+    }
+
     @Override
     public List<ReservationTransport> listerParVoyage(Long voyageId) {
         List<ReservationTransport> reservations = new ArrayList<>();
@@ -213,24 +293,7 @@ public class ReservationDAOImpl implements ReservationDAO {
             ResultSet rs = pstmt.executeQuery();
             
             while (rs.next()) {
-                ReservationTransport r = new ReservationTransport();
-                r.setId(rs.getLong("id"));
-                r.setPassagerId(rs.getLong("passager_id"));
-                r.setVoyageId(rs.getLong("voyage_id"));
-                r.setNbPlaces(rs.getInt("nb_places"));
-                r.setMontantTotal(rs.getDouble("montant_total"));
-                r.setNumeroBillet(rs.getString("numero_billet"));
-                r.setStatut(rs.getString("statut"));
-                Timestamp ts = rs.getTimestamp("date_reservation");
-                r.setDateReservation(ts != null ? ts.toLocalDateTime() : null);
-                r.setPassagerNom(rs.getString("nom"));
-                r.setPassagerPrenom(rs.getString("prenom"));
-                r.setVilleDepart(rs.getString("ville_depart"));
-                r.setVilleArrivee(rs.getString("ville_arrivee"));
-                r.setChauffeur(rs.getString("chauffeur"));
-                Timestamp ts2 = rs.getTimestamp("date_heure_depart");
-                r.setDateHeureDepart(ts2 != null ? ts2.toLocalDateTime() : null);
-                reservations.add(r);
+                reservations.add(mapper(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();

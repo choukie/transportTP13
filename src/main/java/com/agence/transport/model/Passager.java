@@ -7,6 +7,7 @@ public class Passager {
     private String telephone;
     private String pieceIdentite;
     private String email;
+    private Long utilisateurId;
     
     public Passager() {}
     
@@ -27,4 +28,7 @@ public class Passager {
     
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+
+    public Long getUtilisateurId() { return utilisateurId; }
+    public void setUtilisateurId(Long utilisateurId) { this.utilisateurId = utilisateurId; }
 }
