@@ -7,7 +7,7 @@
     String message = (String) request.getAttribute("message");
     String erreur  = (String) request.getAttribute("erreur");
     String recherche = request.getAttribute("recherche") != null ? (String) request.getAttribute("recherche") : "";
-    int page = request.getAttribute("page") != null ? (Integer) request.getAttribute("page") : 1;
+    int pageNum = request.getAttribute("page") != null ? (Integer) request.getAttribute("page") : 1;
     int totalPages = request.getAttribute("totalPages") != null ? (Integer) request.getAttribute("totalPages") : 1;
     int total = request.getAttribute("total") != null ? (Integer) request.getAttribute("total") : 0;
 %>
@@ -147,15 +147,15 @@
                 <!-- PAGINATION -->
                 <% if (totalPages > 1) { %>
                 <div class="pagination" style="padding:16px;">
-                    <% if (page > 1) { %>
-                        <a href="${pageContext.request.contextPath}/voyages?recherche=<%= recherche %>&page=<%= page-1 %>" class="page-link">&#8592;</a>
+                    <% if (pageNum > 1) { %>
+                        <a href="${pageContext.request.contextPath}/voyages?recherche=<%= recherche %>&page=<%= pageNum-1 %>" class="page-link">&#8592;</a>
                     <% } %>
                     <% for (int i = 1; i <= totalPages; i++) { %>
                         <a href="${pageContext.request.contextPath}/voyages?recherche=<%= recherche %>&page=<%= i %>"
-                           class="page-link <%= i == page ? "active" : "" %>"><%= i %></a>
+                           class="page-link <%= i == pageNum ? "active" : "" %>"><%= i %></a>
                     <% } %>
-                    <% if (page < totalPages) { %>
-                        <a href="${pageContext.request.contextPath}/voyages?recherche=<%= recherche %>&page=<%= page+1 %>" class="page-link">&#8594;</a>
+                    <% if (pageNum < totalPages) { %>
+                        <a href="${pageContext.request.contextPath}/voyages?recherche=<%= recherche %>&page=<%= pageNum+1 %>" class="page-link">&#8594;</a>
                     <% } %>
                 </div>
                 <% } %>
